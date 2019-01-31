@@ -103,6 +103,8 @@ export default class ImageResize {
     show = (img) => {
         // keep track of this img element
         this.img = img;
+        // Save off the size, otherwise it's lost in setSelection(null) ¯\_(ツ)_/¯
+        this.imgRect = img.getBoundingClientRect();
 
         this.showOverlay();
 
@@ -154,21 +156,21 @@ export default class ImageResize {
 
         // position the overlay over the image
         const parent = this.quill.root.parentNode;
-        const imgRect = this.img.getBoundingClientRect();
         const containerRect = parent.getBoundingClientRect();
 
         Object.assign(this.overlay.style, {
-            left: `${imgRect.left - containerRect.left - 1 + parent.scrollLeft}px`,
-            top: `${imgRect.top - containerRect.top + parent.scrollTop}px`,
-            width: `${imgRect.width}px`,
-            height: `${imgRect.height}px`,
+            left: `${this.imgRect.left - containerRect.left - 1 + parent.scrollLeft}px`,
+            top: `${this.imgRect.top - containerRect.top + parent.scrollTop}px`,
+            width: `${this.imgRect.width}px`,
+            height: `${this.imgRect.height}px`,
         });
     };
 
     hide = () => {
         this.hideOverlay();
         this.removeModules();
-        this.img = undefined;
+        this.img = null;
+        this.imgRect = null;
     };
 
     setUserSelect = (value) => {
