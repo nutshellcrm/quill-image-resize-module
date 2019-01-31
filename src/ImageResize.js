@@ -128,8 +128,6 @@ export default class ImageResize {
         Object.assign(this.overlay.style, this.options.overlayStyles);
 
         this.quill.root.parentNode.appendChild(this.overlay);
-
-        this.repositionElements();
     };
 
     hideOverlay = () => {
