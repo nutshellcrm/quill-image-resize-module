@@ -1,4 +1,5 @@
 import defaultsDeep from 'lodash/defaultsDeep';
+import Delta from 'quill-delta';
 import DefaultOptions from './DefaultOptions';
 import { DisplaySize } from './modules/DisplaySize';
 import { Toolbar } from './modules/Toolbar';
@@ -188,7 +189,17 @@ export default class ImageResize {
     checkImage = (evt) => {
         if (this.img) {
             if (evt.keyCode == 46 || evt.keyCode == 8) {
-                window.Quill.find(this.img).deleteAt(0);
+                const imgBlot = window.Quill.find(this.img);
+                const imgIndex = this.quill.getIndex(imgBlot);
+
+                // Force the editor to be focused.
+                this.quill.focus();
+
+                // Keep everything before (and after) the image, but delete the image blot.
+                this.quill.updateContents(new Delta()
+                    .retain(imgIndex)
+                    .delete(1)
+                );
             }
             this.hide();
         }
