@@ -1,4 +1,5 @@
 import defaultsDeep from 'lodash/defaultsDeep';
+import Delta from 'quill-delta';
 import DefaultOptions from './DefaultOptions';
 import { DisplaySize } from './modules/DisplaySize';
 import { Toolbar } from './modules/Toolbar';
@@ -102,6 +103,8 @@ export default class ImageResize {
     show = (img) => {
         // keep track of this img element
         this.img = img;
+        // Save off the size, otherwise it's lost in setSelection(null) ¯\_(ツ)_/¯
+        this.imgRect = img.getBoundingClientRect();
 
         this.showOverlay();
 
@@ -127,8 +130,6 @@ export default class ImageResize {
         Object.assign(this.overlay.style, this.options.overlayStyles);
 
         this.quill.root.parentNode.appendChild(this.overlay);
-
-        this.repositionElements();
     };
 
     hideOverlay = () => {
@@ -155,21 +156,21 @@ export default class ImageResize {
 
         // position the overlay over the image
         const parent = this.quill.root.parentNode;
-        const imgRect = this.img.getBoundingClientRect();
         const containerRect = parent.getBoundingClientRect();
 
         Object.assign(this.overlay.style, {
-            left: `${imgRect.left - containerRect.left - 1 + parent.scrollLeft}px`,
-            top: `${imgRect.top - containerRect.top + parent.scrollTop}px`,
-            width: `${imgRect.width}px`,
-            height: `${imgRect.height}px`,
+            left: `${this.imgRect.left - containerRect.left - 1 + parent.scrollLeft}px`,
+            top: `${this.imgRect.top - containerRect.top + parent.scrollTop}px`,
+            width: `${this.imgRect.width}px`,
+            height: `${this.imgRect.height}px`,
         });
     };
 
     hide = () => {
         this.hideOverlay();
         this.removeModules();
-        this.img = undefined;
+        this.img = null;
+        this.imgRect = null;
     };
 
     setUserSelect = (value) => {
@@ -188,13 +189,19 @@ export default class ImageResize {
     checkImage = (evt) => {
         if (this.img) {
             if (evt.keyCode == 46 || evt.keyCode == 8) {
-                window.Quill.find(this.img).deleteAt(0);
+                const imgBlot = window.Quill.find(this.img);
+                const imgIndex = this.quill.getIndex(imgBlot);
+
+                // Force the editor to be focused.
+                this.quill.focus();
+
+                // Keep everything before (and after) the image, but delete the image blot.
+                this.quill.updateContents(new Delta()
+                    .retain(imgIndex)
+                    .delete(1)
+                );
             }
             this.hide();
         }
     };
-}
-
-if (window.Quill) {
-    window.Quill.register('modules/imageResize', ImageResize);
 }
